@@ -1,3 +1,4 @@
+import { createServer } from 'node:http'
 import { WebSocketServer } from 'ws'
 import { INITIAL_STATES, ROOM_ORDER, ROOMS } from './src/house.js'
 
@@ -171,4 +172,24 @@ export function createLiveServer({ server, path = DEFAULT_PATH, log = console.lo
       wss.close()
     },
   }
+}
+
+if (process.argv[1] && new URL(import.meta.url).pathname === new URL(`file://${process.argv[1].replace(/\\/g, '/')}`).pathname) {
+  const server = createServer((_request, response) => {
+    response.writeHead(200, { 'content-type': 'text/plain' })
+    response.end('Smart Home live bridge\n')
+  })
+  const live = createLiveServer({ server, path: DEFAULT_PATH })
+  const port = Number(process.env.PORT) || 5173
+
+  server.listen(port, '0.0.0.0', () => {
+    console.log(`Smart Home live bridge listening on 0.0.0.0:${port}`)
+  })
+
+  const shutdown = () => {
+    live.close()
+    server.close(() => process.exit(0))
+  }
+  process.once('SIGTERM', shutdown)
+  process.once('SIGINT', shutdown)
 }
