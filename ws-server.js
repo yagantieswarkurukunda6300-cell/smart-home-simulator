@@ -79,7 +79,7 @@ export function createLiveServer({
     try {
       const url = new URL(
         request.url || '/',
-        'http://localhost',
+        'http://ws.invalid',
       )
 
       if (url.pathname !== path) {

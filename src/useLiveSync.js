@@ -31,6 +31,7 @@ export function useLiveSync({ states, onRemoteState }) {
   const wsRef = useRef(null)
   const remoteApplyRef = useRef(false)
   const lastSentRef = useRef(null)
+  const pendingStateRef = useRef(null)
   const statesRef = useRef(states)
   const onRemoteStateRef = useRef(onRemoteState)
 
@@ -39,12 +40,13 @@ export function useLiveSync({ states, onRemoteState }) {
 
   const sendSync = useCallback((wireState) => {
     const key = JSON.stringify(wireState)
-    if (lastSentRef.current === key) return
-    lastSentRef.current = key
+    pendingStateRef.current = wireState
     const ws = wsRef.current
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: 'sync', state: wireState }))
-    }
+    if (!ws || ws.readyState !== WebSocket.OPEN) return
+    if (lastSentRef.current === key) return
+    ws.send(JSON.stringify({ type: 'sync', state: wireState }))
+    lastSentRef.current = key
+    pendingStateRef.current = null
   }, [])
 
   // Publish local changes; skip when the change came from the hub.
@@ -95,7 +97,7 @@ export function useLiveSync({ states, onRemoteState }) {
         retries = 0
         setStatus('connected')
         ws.send(JSON.stringify({ type: 'hello', role: 'controller' }))
-        ws.send(JSON.stringify({ type: 'sync', state: normalizeState(statesRef.current) }))
+        sendSync(pendingStateRef.current ?? normalizeState(statesRef.current))
       }
 
       ws.onmessage = (event) => {
@@ -114,11 +116,12 @@ export function useLiveSync({ states, onRemoteState }) {
           if (msg.phoneDirty && msg.state) {
             // A phone has driven the house while we were away: adopt its state.
             lastSentRef.current = JSON.stringify(msg.state)
+            pendingStateRef.current = null
             remoteApplyRef.current = true
             onRemoteStateRef.current(msg.state)
           } else {
             // Hub is pristine: publish the home state we already hold.
-            ws.send(JSON.stringify({ type: 'sync', state: normalizeState(statesRef.current) }))
+            sendSync(normalizeState(statesRef.current))
           }
           return
         }
@@ -126,6 +129,7 @@ export function useLiveSync({ states, onRemoteState }) {
         if (msg.type === 'state') {
           if (msg.state) {
             lastSentRef.current = JSON.stringify(msg.state)
+            pendingStateRef.current = null
             remoteApplyRef.current = true
             onRemoteStateRef.current(msg.state)
           }
