@@ -202,7 +202,6 @@ export function SmartHomeProvider({ children }: { children: React.ReactNode }) {
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const shouldStayConnectedRef = useRef(false);
   const attemptsRef = useRef(0);
-  const lastRemoteRef = useRef<string | null>(null);
   const lastSentRef = useRef<string | null>(null);
   const hostRef = useRef(network.host);
   const portRef = useRef(network.port);
@@ -280,7 +279,8 @@ export function SmartHomeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const applyWireState = useCallback((wire: Record<string, Record<string, boolean>>) => {
-    lastRemoteRef.current = JSON.stringify(wire);
+    const key = JSON.stringify(wire);
+    lastSentRef.current = key;
     setDevices((prev) => wireToDevices(prev, wire as WireState));
     setNetwork((prev) => ({ ...prev, deviceCount: countWireDevices(wire) }));
   }, []);
@@ -435,16 +435,12 @@ export function SmartHomeProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
-  // Publish local device changes; never echo back what we just received from the hub.
+  // Publish local device changes; the latest received state is already cached in lastSentRef.
   useEffect(() => {
     const ws = wsRef.current;
     if (!ws || ws.readyState !== 1) return;
     const wire = devicesToWire(devices);
     const key = JSON.stringify(wire);
-    if (lastRemoteRef.current === key) {
-      lastRemoteRef.current = null;
-      return;
-    }
     if (lastSentRef.current === key) return;
     lastSentRef.current = key;
     ws.send(JSON.stringify({ type: 'sync', state: wire }));

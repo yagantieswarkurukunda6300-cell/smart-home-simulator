@@ -134,8 +134,9 @@ export function createLiveServer({ server, path = DEFAULT_PATH, log = console.lo
       }
 
       if (msg.type === 'sync') {
-        applySync(msg.state, client.role)
-        broadcast({ type: 'state', state }, client.ws)
+        if (applySync(msg.state, client.role)) {
+          broadcast({ type: 'state', state }, client.ws)
+        }
         return
       }
 

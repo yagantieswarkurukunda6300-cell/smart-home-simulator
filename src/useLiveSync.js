@@ -113,6 +113,7 @@ export function useLiveSync({ states, onRemoteState }) {
           if (typeof msg.phones === 'number') setPhones(msg.phones)
           if (msg.phoneDirty && msg.state) {
             // A phone has driven the house while we were away: adopt its state.
+            lastSentRef.current = JSON.stringify(msg.state)
             remoteApplyRef.current = true
             onRemoteStateRef.current(msg.state)
           } else {
@@ -124,6 +125,7 @@ export function useLiveSync({ states, onRemoteState }) {
 
         if (msg.type === 'state') {
           if (msg.state) {
+            lastSentRef.current = JSON.stringify(msg.state)
             remoteApplyRef.current = true
             onRemoteStateRef.current(msg.state)
           }

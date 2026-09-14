@@ -35,6 +35,8 @@ export default defineConfig({
   plugins: [react(), liveBridgePlugin()],
   server: {
     host: true,
+    port: 5173,
+    strictPort: true,
     watch: {
       ignored: ['**/.live-state*', '**/.live-state*/**'],
     },

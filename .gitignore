@@ -11,7 +11,13 @@ node_modules
 dist
 dist-ssr
 *.local
-.live-state.json
+.env
+.env.*
+.live-state*
+coverage
+.cache
+.vite
+*.tsbuildinfo
 
 # Editor directories and files
 .vscode/*
