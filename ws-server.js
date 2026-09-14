@@ -170,15 +170,6 @@ export function createLiveServer({
 
     clients.add(client)
 
-    // Send current state immediately.
-    send(ws, {
-      type: 'welcome',
-      clientId: client.id,
-      state,
-      phoneDirty,
-      phones: phoneCount(),
-    })
-
     ws.on('message', (raw) => {
       let msg
 
@@ -200,6 +191,14 @@ export function createLiveServer({
         } else {
           client.role = 'controller'
         }
+
+        send(ws, {
+          type: 'welcome',
+          clientId: client.id,
+          state,
+          phoneDirty,
+          phones: phoneCount(),
+        })
 
         const peerMessage = {
           type: 'peers',
