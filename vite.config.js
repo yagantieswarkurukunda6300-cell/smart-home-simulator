@@ -9,18 +9,26 @@ function liveBridgePlugin() {
 
   const attach = (server) => {
     if (live) return
+
     const httpServer = server.httpServer ?? server
-    live = createLiveServer({ server: httpServer, path: WS_PATH })
+
+    live = createLiveServer({
+      server: httpServer,
+      path: WS_PATH,
+    })
   }
 
   return {
     name: 'smart-home-live-bridge',
+
     configureServer(server) {
       attach(server)
     },
+
     configurePreviewServer(server) {
       attach(server)
     },
+
     closeBundle() {
       if (live) {
         live.close()
@@ -30,21 +38,37 @@ function liveBridgePlugin() {
   }
 }
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), liveBridgePlugin()],
+  plugins: [
+    react(),
+    liveBridgePlugin(),
+  ],
+
   server: {
     host: true,
     port: 5173,
     strictPort: true,
+
     watch: {
-      ignored: ['**/.live-state*', '**/.live-state*/**'],
+      ignored: [
+        '**/.live-state*',
+        '**/.live-state*/**',
+      ],
     },
   },
+
   preview: {
     host: true,
+
+    allowedHosts: [
+      'smart-home-simulator-2bft.onrender.com',
+    ],
+
     watch: {
-      ignored: ['**/.live-state*', '**/.live-state*/**'],
+      ignored: [
+        '**/.live-state*',
+        '**/.live-state*/**',
+      ],
     },
   },
 })
